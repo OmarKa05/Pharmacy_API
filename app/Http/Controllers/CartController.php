@@ -43,48 +43,55 @@ class CartController extends Controller
         return response()->json(['message' => 'Medicines added to cart']);
     }
     public function viewCart()
-{
-    $user = auth()->user();
-
-    // Check if the user is an admin
-    if ($user->role === 'admin') {
-        // Retrieve all carts and their items for the admin
-        $carts = Cart::with('items')->get();
-
-        foreach ($carts as $cart) {
-            foreach ($cart->items as $item) {
-                $item->total_price = $item->quantity * $item->medicine->price;
+    {
+        $user = auth()->user();
+    
+        // Check if the user is an admin
+        if ($user->role === 'admin') {
+            // Retrieve all carts and their items for the admin
+            $carts = Cart::with('items.medicine')->get();
+    
+            foreach ($carts as $cart) {
+                $cartTotalPrice = 0; // Initialize cart total price
+                foreach ($cart->items as $item) {
+                    if ($item && $item->medicine) {
+                        $item->total_price = $item->quantity * $item->medicine->price;
+                        $cartTotalPrice += $item->total_price; // Add to cart's total price
+                    }
+                }
+                // Add cart's total price to the cart object
+                $cart->cart_total_price = $cartTotalPrice;
             }
+    
+            return response()->json([
+                'carts' => $carts,
+            ]);
         }
-
-        return response()->json($carts);
+    
+        // For regular users, find their cart
+        $carts = Cart::where('user_id', $user->id)->with('items.medicine')->get();
+    
+        foreach ($carts as $cart) {
+            if (!$cart || $cart->items->isEmpty()) {
+                return response()->json(['message' => 'Cart not found or empty'], 404);
+            }
+    
+            $cartTotalPrice = 0; // Initialize cart total price
+            foreach ($cart->items as $item) {
+                if ($item && $item->medicine) {
+                    $item->total_price = $item->quantity * $item->medicine->price;
+                    $cartTotalPrice += $item->total_price; // Add to cart's total price
+                }
+            }
+            // Add cart's total price to the cart object
+            $cart->cart_total_price = $cartTotalPrice;
+        }
+    
+        return response()->json([
+            'carts' => $carts,
+        ]);
     }
-
-    // For regular users, find their cart
-    $carts = Cart::where('user_id', $user->id)->with('items')->get();
-    foreach ($carts as $cart) {
-
-        if (!$cart || $cart->items->isEmpty()) {
-            return response()->json(['message' => 'Cart not found or empty'], 404);
-        }
-
-        foreach ($cart->items as $item) {
-            $item->total_price = $item->quantity * $item->medicine->price;
-        }
     
-
-    }
-
-    
-
-    return response()->json($carts);
-}
-
-    
-    
-
-    
-
 public function removeFromCart($itemId)
 {
     // Find the cart item
