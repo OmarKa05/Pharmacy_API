@@ -1,10 +1,11 @@
 <?php
 
-use App\Http\Controllers\MedicineController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\MedicineController;
 
 // Route::resource('medicines', MedicineController::class);
 
@@ -34,6 +35,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::delete('/companys/{id}', [CompanyController::class, 'destroy']);
     });
 
+    Route::middleware(['auth', 'user.cart'])->group(function () {
+        Route::post('/cart', [CartController::class, 'addToCart']); // Updated to handle array
+        Route::get('/cart', [CartController::class, 'viewCart']);
+        Route::delete('/cart/{itemId}', [CartController::class, 'removeFromCart']);
+    });    
     
 
 });

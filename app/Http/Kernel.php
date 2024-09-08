@@ -32,6 +32,8 @@ class Kernel extends HttpKernel
      protected $routeMiddleware = [
         // Other middleware
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'user.cart' => \App\Http\Middleware\EnsureUserHasCart::class,
+
     ];
     
     protected $middlewareGroups = [
