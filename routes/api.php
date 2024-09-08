@@ -25,6 +25,7 @@ Route::get('/companys/search/{name}', [CompanyController::class, 'searchname']);
 // Protected Routes
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/cart', [CartController::class, 'viewCart']);
 
     Route::group(['middleware' => ['admin']], function () {
         Route::post('/admin/create-user', [AuthController::class, 'createUser']);     // admin middleware for user creation
@@ -37,7 +38,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::middleware(['auth', 'user.cart'])->group(function () {
         Route::post('/cart', [CartController::class, 'addToCart']); // Updated to handle array
-        Route::get('/cart', [CartController::class, 'viewCart']);
+        
         Route::delete('/cart/{itemId}', [CartController::class, 'removeFromCart']);
     });    
     

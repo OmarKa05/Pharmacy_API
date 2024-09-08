@@ -43,44 +43,44 @@ class CartController extends Controller
         return response()->json(['message' => 'Medicines added to cart']);
     }
     public function viewCart()
-    {
-        $user = auth()->user();
-    
-        // Check if the user is an admin
-        if ($user->role === 'admin') {
-            // Retrieve all carts and their items for the admin
-            $carts = Cart::with(['items.medicine' => function ($query) {
-                $query->select('id', 'price'); // Fetch only id and price fields
-            }])->get();
-    
-            // Calculate total price for each cart item
-            foreach ($carts as $cart) {
-                foreach ($cart->items as $item) {
-                    $item->total_price = $item->quantity * $item->medicine->price;
-                }
+{
+    $user = auth()->user();
+
+    // Check if the user is an admin
+    if ($user->role === 'admin') {
+        // Retrieve all carts and their items for the admin
+        $carts = Cart::with('items')->get();
+
+        foreach ($carts as $cart) {
+            foreach ($cart->items as $item) {
+                $item->total_price = $item->quantity * $item->medicine->price;
             }
-    
-            return response()->json($carts);
         }
-    
-        // For regular users, find their cart
-        $cart = Cart::where('user_id', $user->id)
-                    ->with(['items.medicine' => function ($query) {
-                        $query->select('id', 'price'); // Fetch only id and price fields
-                    }])
-                    ->first();
-    
-        if (!$cart) {
-            return response()->json(['message' => 'Cart not found'], 404);
+
+        return response()->json($carts);
+    }
+
+    // For regular users, find their cart
+    $carts = Cart::where('user_id', $user->id)->with('items')->get();
+    foreach ($carts as $cart) {
+
+        if (!$cart || $cart->items->isEmpty()) {
+            return response()->json(['message' => 'Cart not found or empty'], 404);
         }
-    
-        // Calculate total price for each cart item
+
         foreach ($cart->items as $item) {
             $item->total_price = $item->quantity * $item->medicine->price;
         }
     
-        return response()->json($cart);
+
     }
+
+    
+
+    return response()->json($carts);
+}
+
+    
     
 
     
