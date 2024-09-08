@@ -23,4 +23,8 @@ class Medicine extends Model
     {
         return $this->belongsTo(Company::class);
     }
+    public function cartItems()
+    {
+    return $this->hasMany(CartItem::class);
+    }
 };

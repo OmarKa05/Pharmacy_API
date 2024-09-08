@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Medicine;
 use Illuminate\Http\Request;
+use PhpParser\Node\Stmt\Return_;
 
 class CartController extends Controller
 {
@@ -14,36 +15,29 @@ class CartController extends Controller
         $user = auth()->user();
 
         // Find or create a cart for the user
-        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
+        $cart = Cart::create(['user_id' => $user->id]);
 
         // Validate the request
         $validatedData = $request->validate([
             'medicines' => 'required|array',
             'medicines.*.id' => 'required|exists:medicines,id',
             'medicines.*.quantity' => 'required|integer|min:1',
-            'medicines.*.price' => 'required|numeric|min:0',
+            // 'medicines.*.price' => 'required|numeric|min:0',
         ]);
 
         // Loop through each medicine and add it to the cart
         foreach ($validatedData['medicines'] as $medicineData) {
-            // Check if the item already exists in the cart
-            $cartItem = CartItem::where('cart_id', $cart->id)
-                                ->where('medicine_id', $medicineData['id'])
-                                ->first();
 
-            if ($cartItem) {
-                // Update quantity if item already exists
-                $cartItem->quantity += $medicineData['quantity'];
-                $cartItem->save();
-            } else {
+            $medPrice = Medicine::where('id', $medicineData['id'])->select('price')->first();
+            
+
                 // Add new item to the cart
                 CartItem::create([
                     'cart_id' => $cart->id,
                     'medicine_id' => $medicineData['id'],
                     'quantity' => $medicineData['quantity'],
-                    'price' => $medicineData['price'],
+                    'price' => $medPrice['price'],
                 ]);
-            }
         }
         
         return response()->json(['message' => 'Medicines added to cart']);
@@ -55,19 +49,40 @@ class CartController extends Controller
         // Check if the user is an admin
         if ($user->role === 'admin') {
             // Retrieve all carts and their items for the admin
-            $carts = Cart::with('items.medicine')->get();
+            $carts = Cart::with(['items.medicine' => function ($query) {
+                $query->select('id', 'price'); // Fetch only id and price fields
+            }])->get();
+    
+            // Calculate total price for each cart item
+            foreach ($carts as $cart) {
+                foreach ($cart->items as $item) {
+                    $item->total_price = $item->quantity * $item->medicine->price;
+                }
+            }
+    
             return response()->json($carts);
         }
     
         // For regular users, find their cart
-        $cart = Cart::where('user_id', $user->id)->with('items.medicine')->get();
+        $cart = Cart::where('user_id', $user->id)
+                    ->with(['items.medicine' => function ($query) {
+                        $query->select('id', 'price'); // Fetch only id and price fields
+                    }])
+                    ->first();
     
         if (!$cart) {
             return response()->json(['message' => 'Cart not found'], 404);
         }
     
+        // Calculate total price for each cart item
+        foreach ($cart->items as $item) {
+            $item->total_price = $item->quantity * $item->medicine->price;
+        }
+    
         return response()->json($cart);
     }
+    
+
     
 
 public function removeFromCart($itemId)
