@@ -12,11 +12,11 @@ class Medicine extends Model
         'name',
         'slug',
         'scientific_composition',
-        'description',
         'price',
         'company_id',
         'shelf',
-        'quantity'
+        'quantity',
+        'expiry_date'
     ];
 
     public function company()

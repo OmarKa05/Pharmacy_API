@@ -28,7 +28,52 @@ public function createUser(Request $request)
     return response()->json($user, 201);
 // Return the new user details with a 201 Created status
 }
+public function updateUser(Request $request, $id)
+{
+    $user = User::find($id);
 
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
+
+    // Ensure only admins can edit users
+    if (auth()->user()->role !== 'admin') {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    $validatedData = $request->validate([
+        'user_name' => 'required|string|max:255',
+        'password' => 'required|string',
+    ]);
+
+    $user->user_name = $validatedData['user_name'];
+
+    if (!empty($validatedData['password'])) {
+        $user->password = bcrypt($validatedData['password']);
+    }
+
+    $user->save();
+
+    return response()->json(['message' => 'User updated successfully']);
+}
+
+public function deleteUser($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
+
+    // Ensure only admins can delete users
+    if (auth()->user()->role !== 'admin') {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    $user->delete();
+
+    return response()->json(['message' => 'User deleted successfully']);
+}
     public function login(Request $request)
     {
         $fields = $request->validate([

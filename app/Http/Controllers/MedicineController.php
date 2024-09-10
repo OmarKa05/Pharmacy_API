@@ -26,7 +26,8 @@ class MedicineController extends Controller
             'price' => 'required',
             'company_id' => 'required',
             'shelf' => 'required',
-            'quantity' => 'required'
+            'quantity' => 'required',
+            'expiry_date' => 'required|nullable|date',
         ]);
 
         return Medicine::create($request->all());
