@@ -14,7 +14,7 @@ use App\Http\Controllers\MedicineController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/medicines', [MedicineController::class, 'index']);
 Route::get('/medicines/{id}', [MedicineController::class, 'show']);
-Route::get('/medicines/search/{name}', [MedicineController::class, 'searchname']);
+Route::get('/medicines/search/{name}', [MedicineController::class, 'search']);
 Route::get('/medicines/search/{ScientificComposition}', [MedicineController::class, 'searchScientificComposition']);
 
 Route::get('/companys', [CompanyController::class, 'index']);
@@ -43,6 +43,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::middleware(['auth', 'user.cart'])->group(function () {
         Route::post('/cart', [CartController::class, 'addToCart']); // handles array
         Route::delete('/cart/{itemId}', [CartController::class, 'removeFromCart']);
+        // Increment and decrement item quantity
+        Route::patch('/cart/item/{id}/increment', [CartController::class, 'incrementQuantity']);
+        Route::patch('/cart/item/{id}/decrement', [CartController::class, 'decrementQuantity']);
     });    
     
 

@@ -92,7 +92,7 @@ class CartController extends Controller
         ]);
     }
     
-public function removeFromCart($itemId)
+    public function removeFromCart($itemId)
 {
     // Find the cart item
     $cartItem = CartItem::find($itemId);
@@ -113,5 +113,56 @@ public function removeFromCart($itemId)
 
     return response()->json(['message' => 'Cart item removed']);
 }
+
+public function incrementQuantity($itemId)
+{
+    // Find the cart item
+    $cartItem = CartItem::find($itemId);
+
+    if (!$cartItem) {
+        return response()->json(['message' => 'Cart item not found'], 404);
+    }
+
+    // Check if the cart item belongs to the user's cart
+    $cart = Cart::where('user_id', auth()->id())->first();
+
+    if (!$cart || $cartItem->cart_id !== $cart->id) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    // Increment the quantity
+    $cartItem->quantity += 1;
+    $cartItem->save();
+
+    return response()->json(['message' => 'Quantity increased', 'cartItem' => $cartItem]);
+}
+
+public function decrementQuantity($itemId)
+{
+    // Find the cart item
+    $cartItem = CartItem::find($itemId);
+
+    if (!$cartItem) {
+        return response()->json(['message' => 'Cart item not found'], 404);
+    }
+
+    // Check if the cart item belongs to the user's cart
+    $cart = Cart::where('user_id', auth()->id())->first();
+
+    if (!$cart || $cartItem->cart_id !== $cart->id) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    // Decrement the quantity, but ensure it doesn't go below 1
+    if ($cartItem->quantity > 1) {
+        $cartItem->quantity -= 1;
+        $cartItem->save();
+
+        return response()->json(['message' => 'Quantity decreased', 'cartItem' => $cartItem]);
+    } else {
+        return response()->json(['message' => 'Quantity cannot be less than 1'], 400);
+    }
+}
+
 
 }

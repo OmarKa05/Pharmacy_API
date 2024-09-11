@@ -64,6 +64,20 @@ class MedicineController extends Controller
      */
     public function search(string $name)
     {
-        return Medicine::where('name', 'like' , '%'.$name.'%')->with('company')->get();
+        // Find the medicine with the given name
+        $medicine = Medicine::where('name', 'like', '%' . $name . '%')->first();
+        
+        if (!$medicine) {
+            // If no medicine is found with the given name, return an empty collection
+            return Medicine::with('company')->get();
+        }
+        
+        // Retrieve the scientific composition of the found medicine
+        $scientificComposition = $medicine->scientific_composition;
+        
+        // Find all medicines with the same scientific composition
+        return Medicine::where('scientific_composition', $scientificComposition)
+                       ->with('company')
+                       ->get();
     }
 }
